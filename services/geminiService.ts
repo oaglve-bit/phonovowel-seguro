@@ -62,7 +62,7 @@ Format: ━ (STRESS) ━
 `;
 
 /**
- * Generates a list of practice words using THE SECURE NETLIFY FUNCTION.
+ * Generates a list of practice words using THE SECURE VERCEL FUNCTION.
  * @param level The CEFR level to target.
  * @param targetPhonemes Optional list of IPA symbols to prioritize.
  */
@@ -89,7 +89,7 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
       Return ONLY a raw JSON array. Do not include markdown formatting like \`\`\`json.`;
 
   try {
-    // LLAMADA SEGURA A NETLIFY
+    // LLAMADA SEGURA A VERCEL (Ruta corregida)
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -97,41 +97,22 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
     });
 
     if (!response.ok) {
-      throw new Error(`Error en el servidor: ${response.status}`);
+        throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
     
-    // Extraemos el texto de la respuesta de Google
     let textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!textResponse) return [];
 
-    // Limpieza: Quitamos bloques de código markdown si la IA los pone
     textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    return JSON.parse(textResponse);
-
-  } catch (error) {
-    console.error("Error obteniendo palabras:", error);
-    // Si falla, retornamos array vacío para que la App use su fallback
-    return [];
-  }
-};
-
-// ... (el resto del código de arriba déjalo igual)
-
-    // Limpieza y retorno
-    textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(textResponse);
 
   } catch (error: any) {
-    // --- CAMBIO IMPORTANTE AQUÍ ---
     console.error("Error obteniendo palabras:", error);
-    
-    // ESTA ALERTA TE DIRÁ EXACTAMENTE QUÉ PASA
-    alert("⚠️ ERROR DETECTADO: " + error.message); 
-    
+    alert("⚠️ ERROR DETECTADO: " + error.message);
     return [];
   }
 };
