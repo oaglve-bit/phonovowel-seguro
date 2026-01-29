@@ -118,3 +118,20 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
     return [];
   }
 };
+
+// ... (el resto del código de arriba déjalo igual)
+
+    // Limpieza y retorno
+    textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(textResponse);
+
+  } catch (error: any) {
+    // --- CAMBIO IMPORTANTE AQUÍ ---
+    console.error("Error obteniendo palabras:", error);
+    
+    // ESTA ALERTA TE DIRÁ EXACTAMENTE QUÉ PASA
+    alert("⚠️ ERROR DETECTADO: " + error.message); 
+    
+    return [];
+  }
+};
