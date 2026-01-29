@@ -90,7 +90,7 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
 
   try {
     // LLAMADA SEGURA A NETLIFY
-    const response = await fetch("/.netlify/functions/chat", {
+    const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: prompt })
