@@ -89,8 +89,8 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
       Return ONLY a raw JSON array. Do not include markdown formatting like \`\`\`json.`;
 
   try {
-    // LLAMADA SEGURA A VERCEL (Ruta corregida)
-    const response = await fetch("/api/chat", {
+    // LLAMADA SEGURA A VERCEL ( Ruta corregida)
+    const response = await fetch("/.netlify/functions/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: prompt })

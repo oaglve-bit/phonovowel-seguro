@@ -1,40 +1,41 @@
-// Archivo: netlify/functions/chat.js
+exports.handler = async (event, context) => {
+  // Configuración de permisos (CORS) para Netlify
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
 
-export default async (req, context) => {
-  // 1. Buscamos la llave en Netlify
-  const apiKey = Netlify.env.get("GEMINI_API_KEY");
+  // Responder a la verificación del navegador
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
+  // 1. Obtener la llave segura desde Netlify
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "Falta la API Key" }), { status: 500 });
+    return { statusCode: 500, headers, body: JSON.stringify({ error: "Falta la API Key en Netlify" }) };
   }
 
   try {
-    // 2. Leemos el mensaje del usuario
-    const body = req.body ? await req.json() : {};
-    const userMessage = body.prompt || "Hola";
+    // 2. Procesar la solicitud
+    const { prompt } = JSON.parse(event.body);
 
-    // 3. Preparamos la conexión con Google Gemini
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    
-    const payload = {
-      contents: [{
-        parts: [{ text: userMessage }]
-      }]
-    };
-
-    // 4. Conectamos con Google
-    const response = await fetch(url, {
+    // 3. Llamar a Google Gemini
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt || "Hello" }] }],
+        generationConfig: { response_mime_type: "application/json", temperature: 0.9 }
+      })
     });
 
     const data = await response.json();
-
-    // 5. Devolvemos la respuesta a tu App
-    return new Response(JSON.stringify(data), { status: 200 });
+    return { statusCode: 200, headers, body: JSON.stringify(data) };
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
   }
 };
