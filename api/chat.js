@@ -1,6 +1,5 @@
-// Archivo: api/chat.js
 export default async function handler(req, res) {
-  // 1. Configurar CORS (por seguridad estándar)
+  // 1. Permisos para que tu web hable con el servidor (CORS)
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -9,53 +8,39 @@ export default async function handler(req, res) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
-  // Manejar pre-flight request (necesario para navegadores)
+  // Si es una verificación del navegador, respondemos OK
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // 2. Verificación de seguridad
+  // 2. Seguridad: Verificamos la llave
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "Falta la API Key en Vercel" });
   }
 
   try {
-    // 3. Obtener el prompt (Vercel ya nos da el body parseado)
     const { prompt } = req.body || {};
-    const message = prompt || "Hello";
-
-    // 4. Configuración para Google Gemini
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
-    const payload = {
-      contents: [{
-        parts: [{ text: message }]
-      }],
-      generationConfig: {
-        response_mime_type: "application/json",
-        temperature: 0.9
-      }
-    };
-
-    // 5. Llamada a Google
-    const googleResponse = await fetch(url, {
+    // 3. Hablamos con Google
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt || "Hello" }] }],
+        generationConfig: {
+          response_mime_type: "application/json",
+          temperature: 0.9 
+        }
+      })
     });
 
-    if (!googleResponse.ok) {
-       const errorData = await googleResponse.text();
-       return res.status(googleResponse.status).json({ error: "Error en Google", details: errorData });
-    }
-
-    const data = await googleResponse.json();
-    return res.status(200).json(data);
+    const data = await response.json();
+    res.status(200).json(data);
 
   } catch (error) {
-    console.error("Error en Vercel Function:", error);
-    return res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
 }
