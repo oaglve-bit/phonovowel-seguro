@@ -57,39 +57,36 @@ TABLA DE CONVERSIÓN (IPA -> EMOJIS):
 `;
 
 const INTONATION_RULES = `
-Entonación: Use ━ for valleys (low pitch) and ⬆️(Syllable) for peaks (high stress). 
-Format: ━ (STRESS) ━
+Entonación: MANDATORY: You MUST use the arrow ⬆️ for the peak/stress syllable. 
+Authorized symbols ONLY: ━ (low) and ⬆️ (high/stress).
+Example: ━ ⬆️(BOUT) ━
+NEVER use dashes like '-' or '—' for the stress.
 `;
 
-/**
- * Generates a list of practice words using THE SECURE VERCEL FUNCTION.
- * @param level The CEFR level to target.
- * @param targetPhonemes Optional list of IPA symbols to prioritize.
- */
 export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[] = []): Promise<PracticeWord[]> => {
-  const phonemeContext = targetPhonemes.length > 0 
-    ? `IMPORTANT: Every single generated word MUST contain at least one of these IPA sounds: [${targetPhonemes.join(', ')}].`
-    : `Generate a diverse and unpredictable set of words suitable for the level. Avoid the most common 'textbook' examples (like "apple", "cat", "dog") and try to find interesting vocabulary.`;
+  // AJUSTE DE DIFICULTAD: Si es C1 o C2, prohibimos palabras comunes.
+  const difficultyInstruction = (level === 'C1' || level === 'C2') 
+    ? "STRICTLY ADVANCED VOCABULARY. Do NOT use common words like 'about', 'water', 'time'. Use academic, scientific, or literary words (e.g., 'Epistemology', 'Ubiquitous', 'Cacophony')."
+    : "Use standard vocabulary suitable for the level.";
 
-  // Construimos el prompt con TODAS las reglas
+  const phonemeContext = targetPhonemes.length > 0 
+    ? `IMPORTANT: Every word MUST contain at least one of these IPA sounds: [${targetPhonemes.join(', ')}].`
+    : `Generate a diverse set of words.`;
+
   const prompt = `Generate exactly 10 American English practice words for CEFR Level ${level}. 
+      ${difficultyInstruction}
       ${phonemeContext}
-      
-      Variety is critical: do not repeat words from previous sessions. Use a mix of nouns, verbs, and adjectives.
       
       For each word, provide:
       1. "text": English spelling.
       2. "phonetic": Standard IPA.
-      3. "whatsUp": Emoji-phonetic representation using these EXACT rules and symbols: ${EMOJI_RULES}. 
-      IMPORTANT: For complex sounds like /ӕ/ or diphthongs, use the bracket format exactly as shown (e.g. [😀+🤒]).
+      3. "whatsUp": Emoji-phonetic representation using these EXACT rules: ${EMOJI_RULES}. 
       4. "intonation": Intonation pattern using: ${INTONATION_RULES}.
-      5. "vowels": Formant data for primary vowels in the word. 
-          Note: The Schwa (/ə/) is a mutable vowel. If the sound is a schwa, categorize it as "ə" but understand it can vary in height.
+      5. "vowels": Formant data for primary vowels. 
       
-      Return ONLY a raw JSON array. Do not include markdown formatting like \`\`\`json.`;
+      Return ONLY a raw JSON array.`;
 
   try {
-    // LLAMADA SEGURA A VERCEL ( Ruta corregida)
     const response = await fetch("/.netlify/functions/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -97,22 +94,19 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
     });
 
     if (!response.ok) {
-        throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+        throw new Error(`Error del servidor: ${response.status}`);
     }
 
     const data = await response.json();
-    
     let textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
     if (!textResponse) return [];
 
     textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-
     return JSON.parse(textResponse);
 
   } catch (error: any) {
-    console.error("Error obteniendo palabras:", error);
-    alert("⚠️ ERROR DETECTADO: " + error.message);
+    console.error("Error:", error);
+    alert("⚠️ Error: " + error.message);
     return [];
   }
 };
