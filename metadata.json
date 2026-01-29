@@ -1,0 +1,7 @@
+{
+  "name": "PhonoVowel: American English Formant Visualizer",
+  "description": "An interactive speech training tool inspired by VowelCat, utilizing formant mapping and real-time audio visualization to help users master American English pronunciation across CEFR levels.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
