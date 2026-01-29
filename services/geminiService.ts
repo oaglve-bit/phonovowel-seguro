@@ -1,8 +1,5 @@
 import { CEFRLevel, PracticeWord } from "../types";
 
-// YA NO IMPORTAMOS GoogleGenAI porque usaremos tu servidor seguro
-// const ai = new GoogleGenAI({ apiKey: process.env.API_KEY }); <--- ESTO SE VA
-
 const EMOJI_RULES = `
 TABLA DE CONVERSIÓN (IPA -> EMOJIS):
 1. /ʃ/ =shh
@@ -74,7 +71,7 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
     ? `IMPORTANT: Every single generated word MUST contain at least one of these IPA sounds: [${targetPhonemes.join(', ')}].`
     : `Generate a diverse and unpredictable set of words suitable for the level. Avoid the most common 'textbook' examples (like "apple", "cat", "dog") and try to find interesting vocabulary.`;
 
-  // Construimos el prompt tal cual lo hacías antes
+  // Construimos el prompt con TODAS las reglas
   const prompt = `Generate exactly 10 American English practice words for CEFR Level ${level}. 
       ${phonemeContext}
       
@@ -92,7 +89,7 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
       Return ONLY a raw JSON array. Do not include markdown formatting like \`\`\`json.`;
 
   try {
-    // AQUÍ ESTÁ LA MAGIA: Llamamos a tu función segura en Netlify
+    // LLAMADA SEGURA A NETLIFY
     const response = await fetch("/.netlify/functions/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -105,19 +102,19 @@ export const getPracticeWords = async (level: CEFRLevel, targetPhonemes: string[
 
     const data = await response.json();
     
-    // Extraemos el texto de la respuesta de Gemini (igual que en App.tsx)
+    // Extraemos el texto de la respuesta de Google
     let textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!textResponse) return [];
 
-    // Limpieza: A veces la IA devuelve bloques de código markdown (```json ... ```)
-    // Los quitamos para que no falle el JSON.parse
+    // Limpieza: Quitamos bloques de código markdown si la IA los pone
     textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
 
     return JSON.parse(textResponse);
 
   } catch (error) {
     console.error("Error obteniendo palabras:", error);
+    // Si falla, retornamos array vacío para que la App use su fallback
     return [];
   }
 };
